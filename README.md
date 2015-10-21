@@ -11,6 +11,26 @@ var lego = require('lego');
 - `src` 取源内容
 - `use` 指定数据处理规则和后处理逻辑
 
+一个规则包含四个属性：
+- `select` 元素选择器
+- `value` 内容，默认是 text
+- `attr` 属性值
+- `loop` 循环
+
+loop 下可以嵌套规则：
+```js
+{
+    select: '',
+    loop: {
+        select: '',
+        value: '',
+        attr: ''
+    },
+    value: '',
+    attr: ''
+}
+```
+
 ### Example
 ```js
 var vampire = lego.vampire;
