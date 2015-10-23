@@ -4,7 +4,7 @@
 var lego = require('lego');
 ```
 
-## vampire
+## collect
 通过写规则处理数据，不需要每个内容源写一堆不能复用的代码，把重心放在数据后处理的过程。
 
 这个版本简化了公共方法。只有两个
@@ -33,8 +33,8 @@ loop 下可以嵌套规则：
 
 ### Example
 ```js
-var vampire = lego.vampire;
-vampire()
+var collect = lego.collect;
+collect()
     .src('http://movie.douban.com/later/guangzhou')
     .use({
         select: '#showing-soon .item',
