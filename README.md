@@ -34,7 +34,10 @@ loop 下可以嵌套规则：
 ### Example
 ```js
 var vampire = lego.vampire;
-vampire()
+vampire({
+    proxy: 'http://192.168.2.100:8080',
+    userAgent: ''
+})
     .src('http://movie.douban.com/later/guangzhou')
     .use({
         select: '#showing-soon .item',
