@@ -19,5 +19,8 @@
   "devDependencies": {
     "gulp-gzip": "^1.2.0",
     "gulp-tar": "^1.5.0"
+  },
+  "dependencies": {
+    "nodemailer": "^1.8.0"
   }
 }
