@@ -33,16 +33,11 @@ loop 下可以嵌套规则：
 
 ### Example
 ```js
-<<<<<<< HEAD
-var vampire = lego.vampire;
-vampire({
+var collect = lego.collect;
+collect({
     proxy: 'http://192.168.2.100:8080',
     userAgent: ''
 })
-=======
-var collect = lego.collect;
-collect()
->>>>>>> origin/master
     .src('http://movie.douban.com/later/guangzhou')
     .use({
         select: '#showing-soon .item',
