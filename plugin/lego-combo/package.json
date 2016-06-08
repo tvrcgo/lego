@@ -1,0 +1,14 @@
+{
+  "name": "lego-combo",
+  "version": "1.0.0",
+  "description": "combo service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "combo"
+  ],
+  "author": "tvrcgo",
+  "license": "MIT"
+}

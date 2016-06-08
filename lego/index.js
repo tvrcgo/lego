@@ -3,20 +3,21 @@
 const EventEmitter = require('events');
 const cluster = require('cluster');
 const os = require('os');
-const path = require('path');
+const join = require('path').join;
 const fs = require('fs');
 const koa = require('koa');
 const serve = require('koa-static');
 const mount = require('koa-mount');
+const router = require('koa-router')();
 
-const worker = path.join(__dirname, 'worker.js');
+const worker = join(__dirname, 'worker.js');
 
 class Lego extends EventEmitter {
 
   constructor() {
     super()
     this.ctx = {};
-    this.root = this.ctx.root = process.cwd();
+    this.root = process.cwd();
   }
 
   start(opts) {
@@ -37,18 +38,20 @@ class Lego extends EventEmitter {
     else {
       // load config
       this.ctx.config = this.loadConfig();
-      // mount middlewares
-      this.ctx.middlewares = this.mountMiddlewares();
+      // mount plugins
+      this.ctx.plugins = this.mountPlugins();
       // mount services
       this.ctx.services = this.mountServices();
+      // mount middlewares
+      this.ctx.middlewares = this.mountMiddlewares();
       // start worker
       require(worker)(opts, this.ctx);
     }
   }
 
   loadConfig() {
-    const configPath = path.join(this.root, '/config/config');
-    const pluginPath = path.join(this.root, '/config/plugin');
+    const configPath = join(this.root, '/config/config');
+    const pluginPath = join(this.root, '/config/plugin');
     return Object.assign({
       env: process.env.ENV || 'develop'
     },
@@ -57,31 +60,63 @@ class Lego extends EventEmitter {
     );
   }
 
+  mountPlugins() {
+    const pluginConfig = this.ctx.config.plugin;
+    return pluginConfig && typeof pluginConfig === 'object' ?
+      Object.keys(pluginConfig).filter(key => {
+        // filter active plugins
+        const plugin = pluginConfig[key];
+        return (plugin.enable || plugin.enable === undefined) && (plugin.path || plugin.package)
+      }).map(key => {
+        // mount plugins
+        const plugin = pluginConfig[key];
+        if (plugin.path) {
+          const tar = join(this.root, '/plugin/', plugin.path);
+          return require(tar);
+        }
+        if (plugin.package) {
+          return require(plugin.package);
+        }
+      }) : [];
+  }
+
   mountMiddlewares() {
-    // app/middleware/*
-    const mwPath = path.join(this.root, '/app/middleware');
+    const mwPath = join(this.root, '/app/middleware');
     const mwConfig = this.ctx.config.middleware;
-    let middlewares = mwConfig && typeof mwConfig === 'object' ?
-      Object.keys(mwConfig).map((name) => require(path.join(mwPath, name))(mwConfig[name])) : [];
+    let middlewares = [];
     // static middleware
     if (this.ctx.config.plugin && this.ctx.config.plugin.static) {
-      console.log('static enable.');
-      middlewares.push(mount('/public', serve(path.join(this.root, '/app/public'))));
+      middlewares.push(mount('/public', serve(join(this.root, '/app/public'))));
     }
+    // app/middleware/*
+    const mws = mwConfig && typeof mwConfig === 'object' ?
+      Object.keys(mwConfig).map((name) => require(join(mwPath, name))(mwConfig[name])) : [];
+    middlewares = middlewares.concat(mws);
     // router middleware
+    const routerPath = join(this.root, '/app/router');
+    const routers = fs.readdirSync(routerPath);
+    let routeTo = {};
+    routers
+      .filter(r => r !== '_')
+      .map(r => r.replace(/\.js$/g, ''))
+      .forEach(r => {
+        routeTo[r] = require(join(routerPath, r));
+      });
+    require(join(routerPath, '/_'))(router, routeTo);
+    middlewares = middlewares.concat(router.routes(), router.allowedMethods({ throw: true }));
 
     return middlewares;
   }
 
   mountServices() {
-    const servicePath = path.join(this.root, '/app/service');
+    const servicePath = join(this.root, '/app/service');
     const services = fs.readdirSync(servicePath);
     return services ?
-      services.map((serv) => {
+      services.map(serv => {
         serv = serv.replace(/\.js$/, '');
         return {
           name: serv,
-          target: require(path.join(servicePath, serv))
+          target: require(join(servicePath, serv))
         };
       }) : [];
   }

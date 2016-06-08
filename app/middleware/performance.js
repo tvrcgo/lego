@@ -2,9 +2,8 @@
 module.exports = function(opts) {
   return (ctx, next) => {
     const start = +new Date;
-    next().then(() => {
+    next().then(done => {
       ctx.set('X-Duration', +new Date - start);
-      ctx.body = 'hi, render works.';
     });
   }
 };

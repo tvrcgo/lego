@@ -1,0 +1,19 @@
+{
+  "name": "lego-livereload",
+  "version": "1.0.0",
+  "description": "livereload plugin",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "livereload",
+    "plugin",
+    "middleware"
+  ],
+  "author": "tvrcgo",
+  "license": "MIT",
+  "dependencies": {
+    "webpack-hot-middleware": "^2.10.0"
+  }
+}
