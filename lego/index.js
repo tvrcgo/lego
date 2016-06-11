@@ -16,7 +16,7 @@ class Lego extends EventEmitter {
 
   constructor() {
     super()
-    this.ctx = {};
+    this.mnt = {};
     this.root = process.cwd();
   }
 
@@ -37,15 +37,15 @@ class Lego extends EventEmitter {
     }
     else {
       // load config
-      this.ctx.config = this.loadConfig();
+      this.mnt.config = this.loadConfig();
       // mount plugins
-      this.ctx.plugins = this.mountPlugins();
+      this.mnt.plugins = this.mountPlugins();
       // mount services
-      this.ctx.services = this.mountServices();
+      this.mnt.services = this.mountServices();
       // mount middlewares
-      this.ctx.middlewares = this.mountMiddlewares();
+      this.mnt.middlewares = this.mountMiddlewares();
       // start worker
-      require(worker)(opts, this.ctx);
+      require(worker)(opts, this.mnt);
     }
   }
 
@@ -61,7 +61,7 @@ class Lego extends EventEmitter {
   }
 
   mountPlugins() {
-    const pluginConfig = this.ctx.config.plugin;
+    const pluginConfig = this.mnt.config.plugin;
     return pluginConfig && typeof pluginConfig === 'object' ?
       Object.keys(pluginConfig).filter(key => {
         // filter active plugins
@@ -82,15 +82,21 @@ class Lego extends EventEmitter {
 
   mountMiddlewares() {
     const mwPath = join(this.root, '/app/middleware');
-    const mwConfig = this.ctx.config.middleware;
+    const mwConfig = this.mnt.config.middleware;
     let middlewares = [];
     // static middleware
-    if (this.ctx.config.plugin && this.ctx.config.plugin.static) {
-      middlewares.push(mount('/public', serve(join(this.root, '/app/public'))));
+    if (this.mnt.config.plugin && this.mnt.config.plugin.static) {
+      middlewares = middlewares.concat(mount('/public', serve(join(this.root, '/app/public'))));
     }
     // app/middleware/*
     const mws = mwConfig && typeof mwConfig === 'object' ?
-      Object.keys(mwConfig).map((name) => require(join(mwPath, name))(mwConfig[name])) : [];
+      Object.keys(mwConfig).map((name) => {
+        return {
+          name: name,
+          target: require(join(mwPath, name)),
+          options: mwConfig[name]
+        };
+      }) : [];
     middlewares = middlewares.concat(mws);
     // router middleware
     const routerPath = join(this.root, '/app/router');
@@ -116,8 +122,15 @@ class Lego extends EventEmitter {
         serv = serv.replace(/\.js$/, '');
         return {
           name: serv,
-          target: require(join(servicePath, serv))
-        };
+          target: (mnt, app) => {
+            // mount services on ctx.service.*
+            if (typeof app.context.service !== 'object') {
+              app.context.service = {};
+            }
+            // mount ctx.service.[name]
+            app.context.service[serv] = require(join(servicePath, serv));
+          }
+        }
       }) : [];
   }
 

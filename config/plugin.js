@@ -9,6 +9,9 @@ exports.plugin = {
     enable: false,
     path: 'lego-livereload'
   },
+  view: {
+    path: 'lego-view'
+  },
   static: true
 }
 
