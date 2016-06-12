@@ -10,7 +10,7 @@ exports.plugin = {
     path: 'lego-livereload'
   },
   view: {
-    path: 'lego-view',
+    path: 'lego-render',
     options: {
       ext: 'html'
     }

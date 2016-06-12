@@ -2,6 +2,7 @@
 
 const EventEmitter = require('events');
 const cluster = require('cluster');
+const cp = require('child_process');
 const os = require('os');
 const join = require('path').join;
 const fs = require('fs');
@@ -10,19 +11,24 @@ const serve = require('koa-static');
 const mount = require('koa-mount');
 const router = require('koa-router')();
 
+const Messenger = require('./lib/messenger');
+
 const worker = join(__dirname, 'worker.js');
+const agent = join(__dirname, 'agent.js');
 
 class Lego extends EventEmitter {
 
-  constructor() {
-    super()
+  constructor(args) {
+    super(args)
     this.mnt = {};
     this.root = process.cwd();
   }
 
   start(opts) {
     opts = opts || {};
+    this.mnt.options = opts;
     if (cluster.isMaster) {
+      this.messenger = new Messenger(this);
       const cpuCount = os.cpus().length;
       const workerCount = opts.workerCount || cpuCount;
       for(let i=0; i<workerCount; i++) {
@@ -34,6 +40,12 @@ class Lego extends EventEmitter {
         cluster.fork();
         console.info('[master] restart worker.');
       });
+      // start agent process
+      this.agent = cp.fork(agent);
+
+      this.on('agent-start', (msg) => {
+        console.log('[master] receive from agent:', msg);
+      })
     }
     else {
       // load config

@@ -8,7 +8,7 @@ module.exports = function(opts) {
       }
       ctx.set('X-Duration', +new Date - start);
     }).catch(err => {
-      console.error(err, ctx.status, ctx.url);
+      console.error(err, ctx.status, ctx.request.href);
     });
   }
 };

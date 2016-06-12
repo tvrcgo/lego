@@ -28,9 +28,14 @@ module.exports = (opts, mnt) => {
   // start server
   app.listen(port);
   console.log('[worker] server start, port:%d', port);
-
+  // exception
   process.on('uncaughtException', err => {
     console.error(err.errno, err.message);
-    process.exit(1);
-  })
+    process.exit(0);
+  });
+  // exit
+  process.once('SIGTERM', () => {
+    console.warn('[worker] worker exit with signal SIGTERM');
+    process.exit(0);
+  });
 };

@@ -1,12 +1,12 @@
 'use strict';
 
-const webpack = require('webpack');
-const convert = require('koa-convert');
-const hotMiddleware = require('webpack-hot-middleware');
 const join = require('path').join;
-
 const root = process.cwd();
-const webpackConfig = require(join(root, '/webpack.config'));
-const compiler = webpack(webpackConfig);
+const browserSync = require('browser-sync');
+const bs = browserSync.create();
 
-module.exports = convert(hotMiddleware(compiler));
+module.exports = (mnt, app) => {
+  bs.init({
+    proxy: '127.0.0.1:' + mnt.options.port
+  })
+}
