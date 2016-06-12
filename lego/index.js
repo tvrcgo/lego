@@ -25,14 +25,14 @@ class Lego extends EventEmitter {
     if (cluster.isMaster) {
       const cpuCount = os.cpus().length;
       const workerCount = opts.workerCount || cpuCount;
-      for(var i=0; i<workerCount; i++) {
+      for(let i=0; i<workerCount; i++) {
         cluster.fork();
       }
       // reboot on crashed.
       cluster.on('exit', (worker, code) => {
-        console.error('cluster worker %d died (%d)', worker.id, code);
+        console.error('[master] cluster worker %d died (%d)', worker.id, code);
         cluster.fork();
-        console.info('restart worker.');
+        console.info('[master] restart worker.');
       });
     }
     else {
@@ -44,6 +44,8 @@ class Lego extends EventEmitter {
       this.mnt.services = this.mountServices();
       // mount middlewares
       this.mnt.middlewares = this.mountMiddlewares();
+      // mount routers
+      this.mnt.routers = this.mountRouters();
       // start worker
       require(worker)(opts, this.mnt);
     }
@@ -51,18 +53,24 @@ class Lego extends EventEmitter {
 
   loadConfig() {
     const configPath = join(this.root, '/config/config');
-    const pluginPath = join(this.root, '/config/plugin');
+    const mountPath = join(this.root, '/config/mount');
     return Object.assign({
       env: process.env.ENV || 'develop'
     },
       require(configPath),
-      require(pluginPath)
+      require(mountPath)
     );
   }
 
   mountPlugins() {
+    const pluginRoot = join(this.root, '/app/plugin');
+    if (!access(pluginRoot)) {
+      console.warn('no plugin directory.');
+      return [];
+    }
     const pluginConfig = this.mnt.config.plugin;
-    return pluginConfig && typeof pluginConfig === 'object' ?
+    // app/plugin/*
+    let plugins = pluginConfig && typeof pluginConfig === 'object' ?
       Object.keys(pluginConfig).filter(key => {
         // filter active plugins
         const plugin = pluginConfig[key];
@@ -70,53 +78,72 @@ class Lego extends EventEmitter {
       }).map(key => {
         // mount plugins
         const plugin = pluginConfig[key];
+        let tar;
         if (plugin.path) {
-          const tar = join(this.root, '/plugin/', plugin.path);
-          return require(tar);
+          tar = require(join(pluginRoot, plugin.path));
         }
         if (plugin.package) {
-          return require(plugin.package);
+          tar = require(plugin.package);
         }
+        let ret = {
+          name: plugin.name,
+          target: tar
+        };
+        if (tar.length === 3) {
+          ret.options = plugin.options || {};
+        }
+        return ret;
       }) : [];
+    // static service
+    if (pluginConfig.static) {
+      plugins.push(mount('/public', serve(join(this.root, '/app/public'))));
+    }
+    return plugins;
   }
 
   mountMiddlewares() {
-    const mwPath = join(this.root, '/app/middleware');
-    const mwConfig = this.mnt.config.middleware;
-    let middlewares = [];
-    // static middleware
-    if (this.mnt.config.plugin && this.mnt.config.plugin.static) {
-      middlewares = middlewares.concat(mount('/public', serve(join(this.root, '/app/public'))));
+    const mwRoot = join(this.root, '/app/middleware');
+    if (!access(mwRoot)) {
+      console.warn('no middleware directory.');
+      return [];
     }
+    const mwConfig = this.mnt.config.middleware;
     // app/middleware/*
-    const mws = mwConfig && typeof mwConfig === 'object' ?
+    return mwConfig && typeof mwConfig === 'object' ?
       Object.keys(mwConfig).map((name) => {
         return {
           name: name,
-          target: require(join(mwPath, name)),
+          target: require(join(mwRoot, name)),
           options: mwConfig[name]
         };
       }) : [];
-    middlewares = middlewares.concat(mws);
-    // router middleware
-    const routerPath = join(this.root, '/app/router');
-    const routers = fs.readdirSync(routerPath);
-    let routeTo = {};
+  }
+
+  mountRouters() {
+    const routerRoot = join(this.root, '/app/router');
+    if (!access(routerRoot)) {
+      console.warn('no router directory.');
+      return [];
+    }
+    const routers = fs.readdirSync(routerRoot);
+    let routerCtrl = {};
     routers
       .filter(r => r !== '_')
       .map(r => r.replace(/\.js$/g, ''))
       .forEach(r => {
-        routeTo[r] = require(join(routerPath, r));
+        routerCtrl[r] = require(join(routerRoot, r));
       });
-    require(join(routerPath, '/_'))(router, routeTo);
-    middlewares = middlewares.concat(router.routes(), router.allowedMethods({ throw: true }));
-
-    return middlewares;
+    require(join(routerRoot, '/_'))(router, routerCtrl);
+    return [router.routes(), router.allowedMethods({ throw: true })];
   }
 
   mountServices() {
-    const servicePath = join(this.root, '/app/service');
-    const services = fs.readdirSync(servicePath);
+    const serviceRoot = join(this.root, '/app/service');
+    if (!access(serviceRoot)) {
+      console.warn('no service directory.');
+      return [];
+    }
+    const services = fs.readdirSync(serviceRoot);
     return services ?
       services.map(serv => {
         serv = serv.replace(/\.js$/, '');
@@ -128,12 +155,21 @@ class Lego extends EventEmitter {
               app.context.service = {};
             }
             // mount ctx.service.[name]
-            app.context.service[serv] = require(join(servicePath, serv));
+            app.context.service[serv] = require(join(serviceRoot, serv));
           }
         }
       }) : [];
   }
 
+}
+
+function access(path) {
+  try {
+    fs.accessSync(path, fs.F_OK);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 module.exports = new Lego;

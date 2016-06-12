@@ -7,8 +7,9 @@ module.exports = (opts, mnt) => {
   const app = new koa();
   const mountwares = [].concat(
     mnt.plugins,
+    mnt.middlewares,
     mnt.services,
-    mnt.middlewares
+    mnt.routers
   );
   // use mount services, plugins, middlewares
   mountwares.forEach(ware => {
@@ -16,7 +17,7 @@ module.exports = (opts, mnt) => {
       app.use(ware);
     }
     if (ware && ware.target) {
-      const ret = ware.options ?
+      const ret = ware.target.length === 3 ?
         ware.target.call(null, ware.options, mnt, app) :
         ware.target.call(null, mnt, app);
       if (typeof ret === 'function') {
@@ -27,4 +28,9 @@ module.exports = (opts, mnt) => {
   // start server
   app.listen(port);
   console.log('[worker] server start, port:%d', port);
+
+  process.on('uncaughtException', err => {
+    console.error(err.errno, err.message);
+    process.exit(1);
+  })
 };

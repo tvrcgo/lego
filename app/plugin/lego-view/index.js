@@ -22,16 +22,13 @@ function render(opts) {
   }
 }
 
-function extend(mnt, app) {
+function extend(opts, mnt, app) {
   // extend ctx.render
   app.context.render = render({
     root: path.join(process.cwd(), 'app/view'),
-    ext: 'html',
+    ext: opts.ext || 'html',
     cache: mnt.config.env === 'develop' ? false : 'memory'
   })
 }
 
-module.exports = {
-  name: 'lego-view',
-  target: extend
-}
+module.exports = extend
