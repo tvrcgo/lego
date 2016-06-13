@@ -22,3 +22,8 @@ exports.plugin = {
 exports.middleware = {
   performance: {}
 }
+
+// 加载的agent
+exports.agent = {
+  livereload: {}
+}

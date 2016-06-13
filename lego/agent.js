@@ -1,18 +1,42 @@
 'use strict';
 
-const path = require('path');
-const root = process.cwd();
+const path = require('path')
+const fs = require('fs')
 
-const agent = require(path.join(root, '/app/agent'));
+const Lego = require('./lego');
 
-// sendmsg: agent -> master
-process.send({
-  to: 'master',
-  action: 'agent-start'
-});
+class Agent extends Lego {
+
+  constructor(args) {
+    super(args)
+    this.mount();
+  }
+
+  ready() {
+    this.send({
+      to: 'master',
+      cmd: 'agent-ready',
+      agentName: this.agentName
+    })
+  }
+
+}
+
+const agent = new Agent
+
+if (agent.mnt.agents.length) {
+  agent.mnt.agents.forEach(item => {
+    agent.agentName = item.name
+    item.target.call(this, agent, item.options)
+  })
+}
+else {
+  // no agent.
+  agent.ready()
+}
 
 // exit
 process.once('SIGTERM', () => {
-  console.warn('[worker] worker exit with signal SIGTERM');
-  process.exit(0);
-});
+  console.warn('[agent] Agent exit with signal SIGTERM')
+  process.exit(0)
+})
