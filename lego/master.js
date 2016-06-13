@@ -23,7 +23,7 @@ class Master extends Lego {
     if (cluster.isMaster) {
       this.messenger = new Messenger(this);
       // start agent
-      this.forkAgent();
+      this.forkAgent(opts);
       this.on('agent-ready', this.onAgentReady.bind(this))
       this.on('worker-start', this.onWorkerStart.bind(this))
     }
@@ -33,7 +33,8 @@ class Master extends Lego {
     }
   }
 
-  forkAgent() {
+  forkAgent(opts) {
+    var args = JSON.stringify(opts)
     this.agent = cp.fork(agentjs, [], {
       cwd: process.cwd()
     });
@@ -64,7 +65,7 @@ class Master extends Lego {
     this.forkWorker();
     // reboot worker on crashed.
     cluster.on('exit', (worker, code) => {
-      console.error('[master] cluster worker %d died (%d), reboot...', worker.id, code);
+      console.error('[master] Worker %d exit (%d), reboot...', worker.id, code);
       this.forkWorker({ count: 1 });
     });
   }

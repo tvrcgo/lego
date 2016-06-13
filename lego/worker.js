@@ -43,6 +43,10 @@ class Worker extends Lego {
       pid: process.pid,
       port: port
     })
+    // restart worker on command
+    this.on('worker-restart', msg=> {
+      process.exit(0)
+    })
   }
 }
 

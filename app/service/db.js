@@ -6,7 +6,7 @@ class DB {
   }
 
   get(key) {
-    console.log('db get:', key);
+    console.log('service.db.get:', key);
   }
 }
 
