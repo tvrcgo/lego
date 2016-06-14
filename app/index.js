@@ -2,4 +2,6 @@
 
 const lego = require('../lego');
 
-lego.start();
+lego.start({
+  port: 1024
+});

@@ -3,23 +3,52 @@ const BrowserSync = require('browser-sync');
 
 module.exports = (agent, opts) => {
 
-  const bs = BrowserSync.create();
-  bs.init({
-    proxy: '127.0.0.1:1024'
-  })
-
-  setTimeout(() => {
-    // restart worker
-    agent.send({
-      to: 'worker',
-      cmd: 'worker-restart'
+  agent.on('workers-ready', msg => {
+    const startOpts = msg.options
+    if (agent.bs) {
+      return agent.bs.reload()
+    }
+    agent.bs = BrowserSync.create();
+    agent.bs.init({
+      proxy: 'localhost:' + (startOpts.port || 1024),
+      ui: false,
+      open: false,
+      reloadDelay: 3000,
+      files: [
+        {
+          match: [
+            "app/view/**/*",
+            "app/public/**/*",
+            "app/component/**/*"
+          ],
+          fn: (evt, file) => {
+            if (/(add|addDir)/.test(evt)) return
+            console.log('[livereload::%s] %s', evt, file)
+            agent.bs.reload()
+          }
+        },
+        {
+          match: [
+            "app/agent/**/*.js",
+            "app/middleware/**/*.js",
+            "app/plugin/**/*.js",
+            "app/router/**/*.js",
+            "app/service/**/*.js",
+            "config/*.js",
+            "lego/**/*.js"
+          ],
+          fn: (evt, file) => {
+            if (/(add|addDir)/.test(evt)) return
+            console.log('[livereload::%s] %s', evt, file)
+            agent.send({
+              to: 'worker',
+              cmd: 'worker-restart'
+            })
+          }
+        }
+      ]
     })
-  }, 3000)
-
-  agent.on('message', msg => {
-    console.log('[agent] livereload: on message', msg)
   })
 
   agent.ready()
-
 }

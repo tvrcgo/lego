@@ -15,11 +15,12 @@ class Master extends Lego {
 
   constructor(args) {
     super(args)
+    this.workerCount = 0
   }
 
   start(opts) {
     opts = opts || {};
-    this.mnt.options = opts;
+    this.options = opts;
     if (cluster.isMaster) {
       this.messenger = new Messenger(this);
       // start agent
@@ -34,7 +35,6 @@ class Master extends Lego {
   }
 
   forkAgent(opts) {
-    var args = JSON.stringify(opts)
     this.agent = cp.fork(agentjs, [], {
       cwd: process.cwd()
     });
@@ -55,8 +55,7 @@ class Master extends Lego {
   }
 
   onAgentReady(msg) {
-    msg.agentName &&
-    console.log('[master] Agent [%s] ready.', msg.agentName);
+    console.log('[master] Agent ready.');
     // already start workers.
     if (Object.keys(cluster.workers).length > 0) {
       return;
@@ -66,6 +65,7 @@ class Master extends Lego {
     // reboot worker on crashed.
     cluster.on('exit', (worker, code) => {
       console.error('[master] Worker %d exit (%d), reboot...', worker.id, code);
+      this.workerCount--;
       this.forkWorker({ count: 1 });
     });
   }
@@ -89,7 +89,18 @@ class Master extends Lego {
   }
 
   onWorkerStart(msg) {
-    console.log('[master] Worker start. Port:%d, Pid:%d', msg.port, msg.pid)
+    // console.log('[master] Worker start. Port:%d, Pid:%d', msg.port, msg.pid)
+    this.workerCount++
+    if (this.workerCount === Object.keys(cluster.workers).length) {
+      this.messenger.sendToAgent({
+        to: 'agent',
+        cmd: 'workers-ready',
+        options: this.options
+      })
+      this.emit('workers-ready')
+      console.log('[master] Workers ready.');
+    }
+
   }
 
 }

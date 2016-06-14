@@ -10,16 +10,19 @@ class Agent extends Lego {
   constructor(args) {
     super(args)
     this.mount();
+    this.readyNum = 0;
   }
 
   ready() {
+    this.readyNum++;
+    if (this.readyNum < this.mnt.agents.length) {
+      return;
+    }
     this.send({
       to: 'master',
-      cmd: 'agent-ready',
-      agentName: this.agentName
+      cmd: 'agent-ready'
     })
   }
-
 }
 
 const agent = new Agent

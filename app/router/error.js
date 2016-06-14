@@ -1,5 +1,5 @@
 'use strict';
 
 exports.code404 = (ctx, next) => {
-  ctx.body = 'nothing.';
+  ctx.throw(404)
 }
