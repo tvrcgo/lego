@@ -7,6 +7,7 @@ const join = require('path').join;
 
 const Lego = require('./lego');
 const Messenger = require('./lib/messenger');
+const debug = require('./lib/debug')('master');
 
 const workerjs = join(__dirname, 'worker.js');
 const agentjs = join(__dirname, 'agent.js');
@@ -22,6 +23,7 @@ class Master extends Lego {
     opts = opts || {};
     this.options = opts;
     if (cluster.isMaster) {
+      debug.info('Start options: %s', JSON.stringify(opts))
       this.messenger = new Messenger(this);
       // start agent
       this.forkAgent(opts);
@@ -49,13 +51,13 @@ class Master extends Lego {
     })
     // reboot agent on crashed.
     this.agent.on('exit', (code) => {
-      console.warn('[master] Agent exit (%d), reboot...', code);
+      debug.error('Agent exit (%d), reboot...', code)
       this.forkAgent();
     })
   }
 
   onAgentReady(msg) {
-    console.log('[master] Agent ready.');
+    debug.succ('Agent ready.')
     // already start workers.
     if (Object.keys(cluster.workers).length > 0) {
       return;
@@ -64,7 +66,7 @@ class Master extends Lego {
     this.forkWorker();
     // reboot worker on crashed.
     cluster.on('exit', (worker, code) => {
-      console.error('[master] Worker %d exit (%d), reboot...', worker.id, code);
+      debug.error('Worker %d exit (%d), reboot...', worker.id, code)
       this.workerCount--;
       this.forkWorker({ count: 1 });
     });
@@ -98,7 +100,7 @@ class Master extends Lego {
         options: this.options
       })
       this.emit('workers-ready')
-      console.log('[master] Workers ready.');
+      debug.succ('Workers ready.')
     }
 
   }

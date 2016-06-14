@@ -40,8 +40,7 @@ class Worker extends Lego {
     this.send({
       to: 'master',
       cmd: 'worker-start',
-      pid: process.pid,
-      port: port
+      pid: process.pid
     })
     // restart worker on command
     this.on('worker-restart', msg=> {

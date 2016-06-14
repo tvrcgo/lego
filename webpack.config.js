@@ -32,6 +32,10 @@ module.exports = {
       {
         test: /\.scss$/,
         loader: 'style!css!sass?sourceMap'
+      },
+      {
+        test: /app\/view\/lib\/[\w\.\/]+$/,
+        loader: 'file-loader?name=dist/app/public/lib/[name].[ext]'
       }
     ]
   }

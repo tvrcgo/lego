@@ -18,6 +18,7 @@ class Agent extends Lego {
     if (this.readyNum < this.mnt.agents.length) {
       return;
     }
+    // all agents are ready
     this.send({
       to: 'master',
       cmd: 'agent-ready'
@@ -34,7 +35,7 @@ if (agent.mnt.agents.length) {
   })
 }
 else {
-  // no agent.
+  // no agent
   agent.ready()
 }
 

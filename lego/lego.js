@@ -48,6 +48,7 @@ class Lego extends EventEmitter {
       console.warn('no agent directory.')
       return [];
     }
+    // app/agent/*
     const agentConfig = this.mnt.config.agent
     return Object.keys(agentConfig).map(name => {
       return {
@@ -64,8 +65,8 @@ class Lego extends EventEmitter {
       console.warn('no plugin directory.');
       return [];
     }
-    const pluginConfig = this.mnt.config.plugin;
     // app/plugin/*
+    const pluginConfig = this.mnt.config.plugin;
     let plugins = pluginConfig && typeof pluginConfig === 'object' ?
       Object.keys(pluginConfig).filter(key => {
         // filter active plugins
@@ -90,7 +91,7 @@ class Lego extends EventEmitter {
         }
         return ret;
       }) : [];
-    // static service
+    // static assets
     if (pluginConfig.static) {
       plugins.push(mount('/public', serve(join(this.root, '/app/public'))));
     }
@@ -103,8 +104,8 @@ class Lego extends EventEmitter {
       console.warn('no middleware directory.');
       return [];
     }
-    const mwConfig = this.mnt.config.middleware;
     // app/middleware/*
+    const mwConfig = this.mnt.config.middleware;
     return mwConfig && typeof mwConfig === 'object' ?
       Object.keys(mwConfig).map((name) => {
         return {
@@ -121,6 +122,7 @@ class Lego extends EventEmitter {
       console.warn('no router directory.');
       return [];
     }
+    // app/router/*
     const routers = fs.readdirSync(routerRoot);
     let routerCtrl = {};
     routers
@@ -139,6 +141,7 @@ class Lego extends EventEmitter {
       console.warn('no service directory.');
       return [];
     }
+    // app/service/*
     const services = fs.readdirSync(serviceRoot);
     return services ?
       services.map(serv => {
