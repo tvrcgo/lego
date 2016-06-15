@@ -27,10 +27,11 @@ lego.start()
 
 ## Technical Stack
 - `koa` 中间件框架，koa@v2
-- `webpack`
-- `babel` ES6 支持
+- `React` 前端
+- `Babel` ES6支持
 - `swig` 模板渲染
-- `browser-sync` livereload 方案
+- `webpack` 构建
+- `browser-sync` livereload方案
 
 ## Install
 ```sh
