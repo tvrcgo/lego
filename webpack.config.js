@@ -1,21 +1,25 @@
+'use strict'
 
-var webpack = require('webpack');
-var path = require('path');
+const webpack = require('webpack')
+const path = require('path')
 
 module.exports = {
-  plugins: [],
   entry: path.resolve(__dirname, 'app/view/main.js'),
   output: {
-    path: 'dist/app/public/',
+    path: 'app/public/',
     filename: 'bundle.js'
   },
   resolve: {
     root: [
-      path.resolve(__dirname, 'app/component')
+      path.resolve(__dirname, 'app/view/component')
     ],
-    extensions: ['', '.js', '.jsx', '.json']
+    extensions: ['', '.js', '.jsx', '.json'],
+    alias: {
+      '$com': path.resolve(__dirname, 'app/view/component')
+    }
   },
   module: {
+    noParse: [],
     loaders: [
       {
         test: /\.(js|jsx)$/,
@@ -24,19 +28,19 @@ module.exports = {
           presets: ['es2015', 'stage-0', 'react']
         },
         include: [
-          path.resolve(__dirname, 'app/view'),
-          path.resolve(__dirname, 'app/component')
+          path.resolve(__dirname, 'app/view')
         ],
         exclude: ['node_modules']
       },
       {
         test: /\.scss$/,
-        loader: 'style!css!sass?sourceMap'
-      },
-      {
-        test: /app\/view\/lib\/[\w\.\/]+$/,
-        loader: 'file-loader?name=dist/app/public/lib/[name].[ext]'
+        loader: 'style!css!sass'
       }
-    ]
-  }
-};
+    ],
+  },
+  externals: {
+    'react': 'React',
+    'react-dom': 'ReactDom'
+  },
+  plugins: []
+}

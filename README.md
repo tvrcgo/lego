@@ -19,7 +19,6 @@ lego.start()
   - `service` 服务
   - `router` 路由
   - `public` 静态资源
-  - `component` 前端组件
   - `view` 视图模板
   - `index.js` 入口文件
 - `config`

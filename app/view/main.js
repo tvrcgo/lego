@@ -1,4 +1,5 @@
 
-import header from 'header'
-import React from 'react';
-import ReactDom  from 'react-dom';
+import React from 'react'
+import Hello from '$com/hello'
+
+React.render(<Hello />, document.getElementById('app'))
