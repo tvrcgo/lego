@@ -103,7 +103,7 @@ class Worker extends Lego {
     const services = fs.readdirSync(serviceRoot)
     this.mnt.services = services ?
       services.map(serv => {
-        serv = serv.replace(/\.js$/, '');
+        serv = serv.replace(/\.js$/, '')
         return {
           name: serv,
           target: (mnt, app) => {
@@ -117,6 +117,24 @@ class Worker extends Lego {
         }
       }) : []
     return this.mnt.services
+  }
+
+  mntJobs() {
+    const jobRoot = join(this.root, '/app/job')
+    if (!access(jobRoot)) {
+      return []
+    }
+    const jobs = fs.readdirSync(jobRoot)
+    this.mnt.jobs = jobs ?
+      jobs.map(name => {
+        name = name.replace(/\.js$/, '')
+        const job = require(join(jobRoot, name))
+        return {
+          name: name,
+          target: job
+        }
+      }) : []
+    return this.mnt.jobs
   }
 
   start(opts) {
