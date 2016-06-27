@@ -5,10 +5,6 @@ exports.plugin = {
     enable: false,
     path: 'lego-combo'
   },
-  livereload: {
-    enable: false,
-    path: 'lego-livereload'
-  },
   view: {
     path: 'lego-render',
     options: {

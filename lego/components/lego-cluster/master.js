@@ -1,16 +1,16 @@
-'use strict';
+'use strict'
 
-const cluster = require('cluster');
-const cp = require('child_process');
-const os = require('os');
-const join = require('path').join;
+const cluster = require('cluster')
+const cp = require('child_process')
+const os = require('os')
+const join = require('path').join
 
-const Lego = require('./lego');
-const Messenger = require('./lib/messenger');
-const debug = require('./lib/debug')('master');
+const Lego = require('../lego')
+const Messenger = require('./lib/messenger')
+const debug = require('./lib/debug')('master')
 
-const workerjs = join(__dirname, 'worker.js');
-const agentjs = join(__dirname, 'agent.js');
+const workerjs = join(__dirname, 'worker.js')
+const agentjs = join(__dirname, 'agent.js')
 
 class Master extends Lego {
 
@@ -20,11 +20,11 @@ class Master extends Lego {
   }
 
   start(opts) {
-    opts = opts || {};
-    this.options = opts;
+    opts = opts || {}
+    this.options = opts
     if (cluster.isMaster) {
       debug.info('Start options: %s', JSON.stringify(opts))
-      this.messenger = new Messenger(this);
+      this.messenger = new Messenger(this)
       // start agent
       this.forkAgent(opts);
       this.on('agent-ready', this.onAgentReady.bind(this))
@@ -91,7 +91,6 @@ class Master extends Lego {
   }
 
   onWorkerStart(msg) {
-    // console.log('[master] Worker start. Port:%d, Pid:%d', msg.port, msg.pid)
     this.workerCount++
     if (this.workerCount === Object.keys(cluster.workers).length) {
       this.messenger.sendToAgent({
