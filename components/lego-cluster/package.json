@@ -1,0 +1,5 @@
+{
+  "name": "lego-cluster",
+  "description": "lego-cluster",
+  "main": "master.js"
+}

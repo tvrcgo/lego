@@ -1,0 +1,5 @@
+{
+  "name": "lego",
+  "description": "lego core module",
+  "main": "lego.js"
+}

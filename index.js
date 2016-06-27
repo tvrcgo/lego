@@ -1,7 +1,4 @@
 
-var lego = exports;
+const cluster = require('./components/lego-cluster')
 
-lego.deploy = require('./lib/deploy');
-lego.collect = require('./lib/collect');
-lego.mail = require('./lib/mail');
-lego.util = require('./lib/util');
+module.exports = cluster
