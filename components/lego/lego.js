@@ -21,15 +21,47 @@ class Lego extends EventEmitter {
     this.mntConfig()
   }
 
+  mount(type) {
+    const root = join(this.root, '/app/', type)
+    if (!this.access(root)) {
+      console.warn('[lego] mount: No <', type, '> assets')
+      return []
+    }
+    const entries = fs.readdirSync(root)
+    return entries ?
+      entries.map(name => {
+        name = name.replace(/\.js$/, '')
+        const entry = require(join(root, name))
+        return {
+          name: name,
+          target: entry
+        }
+      }) : []
+  }
+
   mntConfig() {
-    const configPath = join(this.root, '/config/config')
-    const mountPath = join(this.root, '/config/mount')
+    const configPath = join(this.root, '/config/config.js')
+    const mountPath = join(this.root, '/config/mount.js')
+    if (!this.access(configPath) || !this.access(mountPath)) {
+      throw new Error('[lego] Missing config/config or config/mount')
+      return
+    }
     this.mnt.config = Object.assign({
       env: process.env.ENV || configPath.env || 'develop'
     },
       require(configPath),
       require(mountPath)
     )
+  }
+
+  access(path) {
+    try {
+      fs.accessSync(path, fs.F_OK)
+      return true
+    } catch (e) {
+      console.error('[lego] ERRACCE', e.message)
+      return false
+    }
   }
 
   // send to parent
