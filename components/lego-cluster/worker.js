@@ -28,17 +28,24 @@ class Worker extends Lego {
 
   mntRouters() {
     const routers = this.mount('router')
-    let routerCtrl = {}
+    let entry
+    let target = {}
     routers
-      .filter(r => r.name !== '_')
       .forEach(r => {
-        routerCtrl[r.name] = r.target
+        if (r.name === '_') {
+          entry = r.target
+        }
+        else {
+          target[r.name] = r.target
+        }
       })
-    // invoke router
-    const routerRoot = join(this.root, '/app/router')
-    require(join(routerRoot, '/_'))(router, routerCtrl)
-    // use router middleware
-    return [router.routes(), router.allowedMethods({ throw: true })]
+    if (entry) {
+      // invoke router
+      entry.call(null, router, target)
+      // use router middleware
+      return [router.routes(), router.allowedMethods({ throw: true })]
+    }
+    return []
   }
 
   mntPlugins() {
