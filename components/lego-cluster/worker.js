@@ -116,7 +116,7 @@ class Worker extends Lego {
     // use mount services, plugins, middlewares
     mountwares.forEach(ware => {
       if (typeof ware === 'function') {
-        app.use(ware);
+        app.use(ware)
       }
       if (ware && ware.target) {
         const ret = ware.target.length === 3 ?
