@@ -17,7 +17,8 @@ class Agent extends Lego {
     const agentRoot = join(this.root, '/app/agent')
     if (!this.access(agentRoot)) {
       console.warn('no agent directory.')
-      return [];
+      this.mnt.agents = []
+      return
     }
     // app/agent/*
     const agentConfig = this.mnt.config.agent
