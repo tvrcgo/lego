@@ -15,7 +15,7 @@ class Agent extends Lego {
 
   mntAgents() {
     const agentRoot = join(this.root, '/app/agent')
-    if (!access(agentRoot)) {
+    if (!this.access(agentRoot)) {
       console.warn('no agent directory.')
       return [];
     }
@@ -40,16 +40,6 @@ class Agent extends Lego {
       to: 'master',
       cmd: 'agent-ready'
     })
-  }
-}
-
-function access(path) {
-  try {
-    fs.accessSync(path, fs.F_OK)
-    return true
-  } catch (e) {
-    console.error('[ACCEERR]', e)
-    return false
   }
 }
 

@@ -15,126 +15,93 @@ class Worker extends Lego {
   }
 
   mntMiddlewares() {
-    const mwRoot = join(this.root, '/app/middleware')
-    if (!access(mwRoot)) {
-      console.warn('no middleware directory.')
-      return []
-    }
-    // app/middleware/*
+    const middlewares = this.mount('middleware')
     const mwConfig = this.mnt.config.middleware
-    this.mnt.middlewares = mwConfig && typeof mwConfig === 'object' ?
-      Object.keys(mwConfig).map((name) => {
-        return {
-          name: name,
-          target: require(join(mwRoot, name)),
-          options: mwConfig[name]
-        };
-      }) : []
-    return this.mnt.middlewares
+    return middlewares
+      .filter(mw => !!mwConfig[mw.name])
+      .map(mw => {
+        return Object.assign(mw, {
+          options: mwConfig[mw.name]
+        })
+      })
   }
 
   mntRouters() {
-    const routerRoot = join(this.root, '/app/router');
-    if (!access(routerRoot)) {
-      console.warn('no router directory.');
-      return [];
-    }
-    // app/router/*
-    const routers = fs.readdirSync(routerRoot);
-    let routerCtrl = {};
+    const routers = this.mount('router')
+    let entry
+    let target = {}
     routers
-      .filter(r => r !== '_')
-      .map(r => r.replace(/\.js$/g, ''))
       .forEach(r => {
-        routerCtrl[r] = require(join(routerRoot, r));
-      });
-    require(join(routerRoot, '/_'))(router, routerCtrl);
-    this.mnt.routers = [router.routes(), router.allowedMethods({ throw: true })]
-    return this.mnt.routers
+        if (r.name === '_') {
+          entry = r.target
+        }
+        else {
+          target[r.name] = r.target
+        }
+      })
+    if (entry) {
+      // invoke router
+      entry.call(null, router, target)
+      // use router middleware
+      return [router.routes(), router.allowedMethods({ throw: true })]
+    }
+    return []
   }
 
   mntPlugins() {
-    const pluginRoot = join(this.root, '/app/plugin');
-    if (!access(pluginRoot)) {
-      console.warn('no plugin directory.');
-      return [];
-    }
-    // app/plugin/*
-    const pluginConfig = this.mnt.config.plugin;
+    const pluginConfig = this.mnt.config.plugin
     let plugins = pluginConfig && typeof pluginConfig === 'object' ?
-      Object.keys(pluginConfig).filter(key => {
-        // filter active plugins
-        const plugin = pluginConfig[key];
-        return (plugin.enable || plugin.enable === undefined) && (plugin.path || plugin.package)
-      }).map(key => {
-        // mount plugins
-        const plugin = pluginConfig[key];
-        let tar;
-        if (plugin.path) {
-          tar = require(join(pluginRoot, plugin.path));
-        }
-        if (plugin.package) {
-          tar = require(plugin.package);
-        }
-        let ret = {
-          name: plugin.name,
-          target: tar
-        }
-        if (tar.length === 3) {
-          ret.options = plugin.options || {};
-        }
-        return ret
-      }) : [];
+      Object
+        .keys(pluginConfig)
+        .filter(key => {
+          // active plugins
+          const conf = pluginConfig[key]
+          return (conf.enable || conf.enable === undefined) && (conf.path || conf.package)
+        })
+        .map(key => {
+          // mount plugins
+          let plugin
+          const conf = pluginConfig[key]
+          if (conf.path) {
+            const pluginPath = join(this.root, '/app/plugin', conf.path)
+            if (this.access(pluginPath)) {
+              plugin = require(pluginPath)
+            }
+          }
+          if (conf.package) {
+            plugin = require(conf.package)
+          }
+          let ret = {
+            name: conf.name,
+            target: plugin
+          }
+          if (plugin.length === 3) {
+            ret.options = conf.options || {}
+          }
+          return ret
+        }) : []
     // static assets
     if (pluginConfig.static) {
-      plugins.push(mount('/public', serve(join(this.root, '/app/public'))));
+      plugins.push(mount('/public', serve(join(this.root, '/app/public'))))
     }
-    this.mnt.plugins = plugins
-    return this.mnt.plugins
+    return plugins
   }
 
   mntServices() {
-    const serviceRoot = join(this.root, '/app/service')
-    if (!access(serviceRoot)) {
-      console.warn('no service directory.')
-      return []
-    }
-    // app/service/*
-    const services = fs.readdirSync(serviceRoot)
-    this.mnt.services = services ?
-      services.map(serv => {
-        serv = serv.replace(/\.js$/, '')
-        return {
-          name: serv,
-          target: (mnt, app) => {
-            // mount services on ctx.service.*
-            if (typeof app.context.service !== 'object') {
-              app.context.service = {};
-            }
-            // mount ctx.service.[name]
-            app.context.service[serv] = require(join(serviceRoot, serv));
+    const services = this.mount('service')
+    return services
+      .map(serv => {
+        const tar = serv.target
+        serv.target = (mnt, app) => {
+          // mount services on ctx.service.*
+          if (typeof app.context.service !== 'object') {
+            app.context.service = {}
           }
+          // mount ctx.service.[name]
+          app.context.service[serv.name] = tar
         }
-      }) : []
-    return this.mnt.services
-  }
-
-  mntJobs() {
-    const jobRoot = join(this.root, '/app/job')
-    if (!access(jobRoot)) {
-      return []
-    }
-    const jobs = fs.readdirSync(jobRoot)
-    this.mnt.jobs = jobs ?
-      jobs.map(name => {
-        name = name.replace(/\.js$/, '')
-        const job = require(join(jobRoot, name))
-        return {
-          name: name,
-          target: job
-        }
-      }) : []
-    return this.mnt.jobs
+        return serv
+      })
   }
 
   start(opts) {
@@ -175,28 +142,18 @@ class Worker extends Lego {
   }
 }
 
-function access(path) {
-  try {
-    fs.accessSync(path, fs.F_OK)
-    return true
-  } catch (e) {
-    console.error('[ACCEERR]', e)
-    return false
-  }
-}
-
 module.exports = (opts) => {
   // start worker
-  var worker = new Worker;
-  worker.start(opts);
+  const worker = new Worker
+  worker.start(opts)
   // exception
   process.on('uncaughtException', err => {
-    console.error(err.errno, err.message);
-    process.exit(0);
+    console.error(err.errno, err.message)
+    process.exit(0)
   })
   // exit
   process.once('SIGTERM', () => {
-    console.warn('[worker] Worker exit with signal SIGTERM');
-    process.exit(0);
+    console.warn('[worker] Worker exit with signal SIGTERM')
+    process.exit(0)
   })
 }
