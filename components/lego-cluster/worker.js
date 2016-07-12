@@ -16,7 +16,7 @@ class Worker extends Lego {
 
   mntMiddlewares() {
     const middlewares = this.mount('middleware')
-    const mwConfig = this.mnt.config.middleware
+    const mwConfig = this.mnt.config.middleware || {}
     return middlewares
       .filter(mw => !!mwConfig[mw.name])
       .map(mw => {
@@ -49,7 +49,7 @@ class Worker extends Lego {
   }
 
   mntPlugins() {
-    const pluginConfig = this.mnt.config.plugin
+    const pluginConfig = this.mnt.config.plugin || {}
     let plugins = pluginConfig && typeof pluginConfig === 'object' ?
       Object
         .keys(pluginConfig)

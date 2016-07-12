@@ -59,7 +59,6 @@ class Lego extends EventEmitter {
       fs.accessSync(path, fs.F_OK)
       return true
     } catch (e) {
-      console.error('[lego] ERRACCE', e.message)
       return false
     }
   }
