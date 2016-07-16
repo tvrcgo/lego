@@ -16,17 +16,19 @@ class Agent extends Lego {
   mntAgents() {
     const agentRoot = join(this.root, '/app/agent')
     if (!this.access(agentRoot)) {
-      console.warn('no agent directory.')
       this.mnt.agents = []
       return
     }
     // app/agent/*
-    const agentConfig = this.mnt.config.agent
+    const agentConfig = this.mnt.config.agent || {}
     this.mnt.agents = Object.keys(agentConfig).map(name => {
+      const agent = agentConfig[name]
+      const entry = agent.package ? agent.package : require(join(agentRoot, name))
+      const options = agent.package ? agent.options : agent
       return {
         name: name,
-        target: require(join(agentRoot, name)),
-        options: agentConfig[name]
+        target: entry,
+        options: options
       }
     })
   }
