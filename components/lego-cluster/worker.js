@@ -28,20 +28,18 @@ class Worker extends Lego {
 
   mntRouters() {
     const routers = this.mount('router')
-    let entry
-    let target = {}
-    routers
-      .forEach(r => {
-        if (r.name === '_') {
-          entry = r.target
-        }
-        else {
-          target[r.name] = r.target
-        }
-      })
-    if (entry) {
+    let routes
+    let entries = {}
+    routers.map(r => {
+      if (r.name === '_') {
+        routes = r.entry
+      } else {
+        entries[r.name] = r.entry
+      }
+    })
+    if (routes) {
       // invoke router
-      entry.call(null, router, target)
+      routes.call(null, router, entries)
       // use router middleware
       return [router.routes(), router.allowedMethods({ throw: true })]
     }
@@ -60,25 +58,19 @@ class Worker extends Lego {
         })
         .map(key => {
           // mount plugins
-          let plugin
+          let entry
           const conf = pluginConfig[key]
           if (conf.path) {
-            const pluginPath = join(this.root, '/app/plugin', conf.path)
-            if (this.access(pluginPath)) {
-              plugin = require(pluginPath)
-            }
+            entry = require(join(this.root, '/app/plugin', conf.path))
           }
           if (conf.package) {
-            plugin = require(join(this.root, 'node_modules', conf.package))
+            entry = require(join(this.root, 'node_modules', conf.package))
           }
-          let ret = {
+          return {
             name: conf.name,
-            target: plugin
+            entry: entry,
+            options: conf
           }
-          if (plugin.length === 3) {
-            ret.options = conf.options || {}
-          }
-          return ret
         }) : []
     // static assets
     if (pluginConfig.static) {
@@ -91,14 +83,15 @@ class Worker extends Lego {
     const services = this.mount('service')
     return services
       .map(serv => {
-        const tar = serv.target
-        serv.target = (mnt, app) => {
+        const tar = serv.entry
+        serv.options = this.mnt.config
+        serv.entry = (options, mnt, app) => {
           // mount services on ctx.service.*
           if (typeof app.context.service !== 'object') {
             app.context.service = {}
           }
           // mount ctx.service.[name]
-          app.context.service[serv.name] = tar
+          app.context.service[serv.name] = tar.call(this, options)
         }
         return serv
       })
@@ -118,10 +111,8 @@ class Worker extends Lego {
       if (typeof ware === 'function') {
         app.use(ware)
       }
-      if (ware && ware.target) {
-        const ret = ware.target.length === 3 ?
-          ware.target.call(null, ware.options, this.mnt, app) :
-          ware.target.call(null, this.mnt, app)
+      if (ware && ware.entry) {
+        const ret = ware.entry.call(null, ware.options, this.mnt, app)
         if (typeof ret === 'function') {
           app.use(ret)
         }

@@ -23,19 +23,17 @@ class Agent extends Lego {
     const agentConfig = this.mnt.config.agent || {}
     this.mnt.agents = Object.keys(agentConfig)
       .filter(name => {
-        const agent = agentConfig[name]
-        return agent.enable || agent.enable === undefined
+        const conf = agentConfig[name]
+        return (conf.enable || conf.enable === undefined) && (conf.package || conf.path)
       })
       .map(name => {
-        const agent = agentConfig[name]
-        const entry = agent.package ?
-          require(join(this.root, 'node_modules', agent.package)) : require(join(agentRoot, name))
-        const options = agent.package ?
-          agent.options : agent
+        const conf = agentConfig[name]
+        const entry = conf.package ?
+          require(join(this.root, 'node_modules', conf.package)) : require(join(agentRoot, name))
         return {
           name: name,
           entry: entry,
-          options: options
+          options: conf
         }
       })
   }

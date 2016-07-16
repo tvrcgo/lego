@@ -34,7 +34,7 @@ class Lego extends EventEmitter {
         const entry = require(join(root, name))
         return {
           name: name,
-          target: entry
+          entry: entry
         }
       }) : []
   }

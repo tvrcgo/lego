@@ -22,7 +22,7 @@ class Job extends Lego {
           return
         }
         try {
-          const runner = job.target.call(this, this)
+          const runner = job.target.call(this, this, jobConfig[job.name])
           return new CronJob(jobConfig[job.name].cron||'* * * * * *', runner, null, true)
         }
         catch(err) {
