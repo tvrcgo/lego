@@ -13,23 +13,15 @@ class Job extends Lego {
 
   start(opts) {
     const jobs = this.mount('job')
-    const jobConfig = this.mnt.config.job
-    jobs
-      .filter(job => !!jobConfig[job.name])
-      .forEach(job => {
-        if (!job.target || typeof job.target !== 'function') {
-          throw new Error('[job] Job <', job.name, '> exports must be function')
-          return
-        }
-        try {
-          const runner = job.target.call(this, this, jobConfig[job.name])
-          return new CronJob(jobConfig[job.name].cron||'* * * * * *', runner, null, true)
-        }
-        catch(err) {
-          console.error('[job] ERR:', err)
-          this.emit('error', err)
-        }
-      })
+    jobs.map(job => {
+      try {
+        const runner = job.entry.call(this, this, job.options)
+        return new CronJob(job.options.cron||'* * * * * *', runner, null, true)
+      } catch (e) {
+        console.error('[job] ERR:', err)
+        this.emit('error', err)
+      }
+    })
     // notify master
     this.send({
       to: 'master',

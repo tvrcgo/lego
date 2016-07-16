@@ -30,7 +30,6 @@ const agent = new Agent
 
 if (agent.mnt.agents.length) {
   agent.mnt.agents.forEach(item => {
-    agent.agentName = item.name
     item.entry.call(this, agent, item.options)
   })
 }
