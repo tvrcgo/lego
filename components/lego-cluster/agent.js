@@ -28,8 +28,10 @@ class Agent extends Lego {
       })
       .map(name => {
         const agent = agentConfig[name]
-        const entry = agent.package ? agent.package : require(join(agentRoot, name))
-        const options = agent.package ? agent.options : agent
+        const entry = agent.package ?
+          require(join(this.root, 'node_modules', agent.package)) : require(join(agentRoot, name))
+        const options = agent.package ?
+          agent.options : agent
         return {
           name: name,
           entry: entry,

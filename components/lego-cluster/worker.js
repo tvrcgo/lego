@@ -69,7 +69,7 @@ class Worker extends Lego {
             }
           }
           if (conf.package) {
-            plugin = require(conf.package)
+            plugin = require(join(this.root, 'node_modules', conf.package))
           }
           let ret = {
             name: conf.name,
