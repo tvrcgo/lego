@@ -12,10 +12,6 @@ class Worker extends Lego {
     super(argv)
   }
 
-  mntMiddlewares() {
-    return this.mount('middleware')
-  }
-
   mntRouters() {
     const routers = this.list('router')
     let routes
@@ -34,10 +30,6 @@ class Worker extends Lego {
       return [router.routes(), router.allowedMethods({ throw: true })]
     }
     return []
-  }
-
-  mntPlugins() {
-    return this.mount('plugin')
   }
 
   mntServices() {
@@ -62,13 +54,13 @@ class Worker extends Lego {
     const port = opts.port || 1024
     const app = new koa()
     const mountwares = [].concat(
-      this.mntPlugins(),
-      this.mntMiddlewares(),
+      this.mount('plugin'),
+      this.mount('middleware'),
       this.mntServices(),
       this.mntRouters()
     )
     // use mount services, plugins, middlewares
-    mountwares.forEach(ware => {
+    mountwares.map(ware => {
       if (typeof ware === 'function') {
         app.use(ware)
       }

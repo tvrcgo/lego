@@ -29,7 +29,7 @@ class Agent extends Lego {
 const agent = new Agent
 
 if (agent.mnt.agents.length) {
-  agent.mnt.agents.forEach(item => {
+  agent.mnt.agents.map(item => {
     item.entry.call(this, agent, item.options)
   })
 }
