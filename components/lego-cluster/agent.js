@@ -9,33 +9,8 @@ class Agent extends Lego {
 
   constructor(args) {
     super(args)
-    this.mntAgents()
+    this.mnt.agents = this.mount('agent')
     this.readyNum = 0
-  }
-
-  mntAgents() {
-    const agentRoot = join(this.root, '/app/agent')
-    if (!this.access(agentRoot)) {
-      this.mnt.agents = []
-      return
-    }
-    // app/agent/*
-    const agentConfig = this.mnt.config.agent || {}
-    this.mnt.agents = Object.keys(agentConfig)
-      .filter(name => {
-        const conf = agentConfig[name]
-        return (conf.enable || conf.enable === undefined) && (conf.package || conf.path)
-      })
-      .map(name => {
-        const conf = agentConfig[name]
-        const entry = conf.package ?
-          require(join(this.root, 'node_modules', conf.package)) : require(join(agentRoot, name))
-        return {
-          name: name,
-          entry: entry,
-          options: conf
-        }
-      })
   }
 
   ready() {

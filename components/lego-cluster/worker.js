@@ -3,8 +3,6 @@
 const join = require('path').join
 const fs = require('fs')
 const koa = require('koa')
-const serve = require('koa-static')
-const mount = require('koa-mount')
 const router = require('koa-router')()
 const Lego = require('../lego')
 
@@ -15,19 +13,11 @@ class Worker extends Lego {
   }
 
   mntMiddlewares() {
-    const middlewares = this.mount('middleware')
-    const mwConfig = this.mnt.config.middleware || {}
-    return middlewares
-      .filter(mw => !!mwConfig[mw.name])
-      .map(mw => {
-        return Object.assign(mw, {
-          options: mwConfig[mw.name]
-        })
-      })
+    return this.mount('middleware')
   }
 
   mntRouters() {
-    const routers = this.mount('router')
+    const routers = this.list('router')
     let routes
     let entries = {}
     routers.map(r => {
@@ -47,44 +37,15 @@ class Worker extends Lego {
   }
 
   mntPlugins() {
-    const pluginConfig = this.mnt.config.plugin || {}
-    let plugins = pluginConfig && typeof pluginConfig === 'object' ?
-      Object
-        .keys(pluginConfig)
-        .filter(key => {
-          // active plugins
-          const conf = pluginConfig[key]
-          return (conf.enable || conf.enable === undefined) && (conf.path || conf.package)
-        })
-        .map(key => {
-          // mount plugins
-          let entry
-          const conf = pluginConfig[key]
-          if (conf.path) {
-            entry = require(join(this.root, '/app/plugin', conf.path))
-          }
-          if (conf.package) {
-            entry = require(join(this.root, 'node_modules', conf.package))
-          }
-          return {
-            name: conf.name,
-            entry: entry,
-            options: conf
-          }
-        }) : []
-    // static assets
-    if (pluginConfig.static) {
-      plugins.push(mount('/public', serve(join(this.root, '/app/public'))))
-    }
-    return plugins
+    return this.mount('plugin')
   }
 
   mntServices() {
-    const services = this.mount('service')
+    const services = this.list('service')
     return services
       .map(serv => {
         const tar = serv.entry
-        serv.options = this.mnt.config
+        serv.options = this.config
         serv.entry = (options, mnt, app) => {
           // mount services on ctx.service.*
           if (typeof app.context.service !== 'object') {
