@@ -22,21 +22,36 @@ class Lego extends EventEmitter {
   }
 
   mount(type) {
+    const wares = this.config[type] || {}
+    return Object.keys(wares)
+      .map(key => Object.assign({ key: key }, wares[key]))
+      .filter(ware => (ware.enable || ware.enable === undefined))
+      .map(ware => {
+        const entryName = ware.path || ware.package || ware.key
+        const entryPath = ware.package ? 'node_modules' : '/app/' + type
+        const entry = require(join(this.root, entryPath, entryName))
+        return {
+          name: ware.key,
+          entry: entry,
+          options: ware
+        }
+      })
+  }
+
+  list(type) {
     const root = join(this.root, '/app/', type)
     if (!this.access(root)) {
-      console.warn('[lego] mount: No <', type, '> assets')
+      console.warn(`[lego] No app/${type} directory.`)
       return []
     }
-    const entries = fs.readdirSync(root)
-    return entries ?
-      entries.map(name => {
-        name = name.replace(/\.js$/, '')
-        const entry = require(join(root, name))
+    return fs.readdirSync(root)
+      .map(item => item.replace(/\.js$/, ''))
+      .map(item => {
         return {
-          name: name,
-          target: entry
+          name: item,
+          entry: require(join(root, item))
         }
-      }) : []
+      })
   }
 
   mntConfig() {
@@ -46,7 +61,7 @@ class Lego extends EventEmitter {
       throw new Error('[lego] Missing config/config or config/mount')
       return
     }
-    this.mnt.config = Object.assign({
+    this.config = this.mnt.config = Object.assign({
       env: process.env.ENV || configPath.env || 'develop'
     },
       require(configPath),
@@ -59,7 +74,6 @@ class Lego extends EventEmitter {
       fs.accessSync(path, fs.F_OK)
       return true
     } catch (e) {
-      console.error('[lego] ERRACCE', e.message)
       return false
     }
   }

@@ -9,25 +9,8 @@ class Agent extends Lego {
 
   constructor(args) {
     super(args)
-    this.mntAgents()
+    this.mnt.agents = this.mount('agent')
     this.readyNum = 0
-  }
-
-  mntAgents() {
-    const agentRoot = join(this.root, '/app/agent')
-    if (!this.access(agentRoot)) {
-      console.warn('no agent directory.')
-      return [];
-    }
-    // app/agent/*
-    const agentConfig = this.mnt.config.agent
-    this.mnt.agents = Object.keys(agentConfig).map(name => {
-      return {
-        name: name,
-        target: require(join(agentRoot, name)),
-        options: agentConfig[name]
-      }
-    })
   }
 
   ready() {
@@ -46,9 +29,8 @@ class Agent extends Lego {
 const agent = new Agent
 
 if (agent.mnt.agents.length) {
-  agent.mnt.agents.forEach(item => {
-    agent.agentName = item.name
-    item.target.call(this, agent, item.options)
+  agent.mnt.agents.map(item => {
+    item.entry.call(this, agent, item.options)
   })
 }
 else {
