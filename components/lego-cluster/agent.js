@@ -27,7 +27,7 @@ class Agent extends Lego {
       const options = agent.package ? agent.options : agent
       return {
         name: name,
-        target: entry,
+        entry: entry,
         options: options
       }
     })
@@ -51,7 +51,7 @@ const agent = new Agent
 if (agent.mnt.agents.length) {
   agent.mnt.agents.forEach(item => {
     agent.agentName = item.name
-    item.target.call(this, agent, item.options)
+    item.entry.call(this, agent, item.options)
   })
 }
 else {
