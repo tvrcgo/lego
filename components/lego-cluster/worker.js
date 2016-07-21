@@ -36,7 +36,7 @@ class Worker extends Lego {
     const services = this.list('service')
     return services
       .map(serv => {
-        const tar = serv.entry
+        const entry = serv.entry
         serv.options = this.config
         serv.entry = (options, mnt, app) => {
           // mount services on ctx.service.*
@@ -44,7 +44,7 @@ class Worker extends Lego {
             app.context.service = {}
           }
           // mount ctx.service.[name]
-          app.context.service[serv.name] = tar.call(this, options)
+          app.context.service[serv.name] = entry.call(this, options)
         }
         return serv
       })
@@ -55,7 +55,6 @@ class Worker extends Lego {
     const app = new koa()
     const mountwares = [].concat(
       this.mount('plugin'),
-      this.mount('middleware'),
       this.mntServices(),
       this.mntRouters()
     )
@@ -66,9 +65,11 @@ class Worker extends Lego {
       }
       if (ware && ware.entry) {
         const ret = ware.entry.call(null, ware.options, this.mnt, app)
-        if (typeof ret === 'function') {
-          app.use(ret)
-        }
+        ;[].concat(ret).map(mw => {
+          if (typeof mw === 'function') {
+            app.use(mw)
+          }
+        })
       }
     })
     // start server

@@ -9,14 +9,14 @@ class Agent extends Lego {
 
   constructor(args) {
     super(args)
-    this.mnt.agents = this.mount('agent')
+    this.agents = this.mount('agent')
     this.readyNum = 0
   }
 
   ready() {
     this.readyNum++;
-    if (this.readyNum < this.mnt.agents.length) {
-      return;
+    if (this.readyNum < this.agents.length) {
+      return
     }
     // all agents are ready
     this.send({
@@ -28,8 +28,8 @@ class Agent extends Lego {
 
 const agent = new Agent
 
-if (agent.mnt.agents.length) {
-  agent.mnt.agents.map(item => {
+if (agent.agents.length) {
+  agent.agents.map(item => {
     item.entry.call(this, agent, item.options)
   })
 }
