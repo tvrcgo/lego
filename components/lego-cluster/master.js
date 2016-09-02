@@ -46,7 +46,7 @@ class Master extends Lego {
   forkAgent(opts) {
     this.agent = cp.fork(agentjs, [], {
       cwd: process.cwd()
-    });
+    })
     // message: agent -> master
     this.agent.on('message', msg => {
       // agent -> master -> worker
@@ -70,13 +70,13 @@ class Master extends Lego {
       return
     }
     // start workers
-    this.forkWorker();
+    this.forkWorker()
     // reboot worker on crashed.
     cluster.on('exit', (worker, code) => {
       debug.error('Worker %d exit (%d), reboot...', worker.id, code)
       this.workerCount--
       this.forkWorker({ count: 1 })
-    });
+    })
   }
 
   forkWorker(opts) {
@@ -88,7 +88,7 @@ class Master extends Lego {
       // message: worker -> master
       workerProc.on('message', msg => {
         // worker -> master -> agent
-        msg.from = 'worker';
+        msg.from = 'worker'
         if (msg.to === 'agent') {
           return this.messenger.sendToAgent(msg)
         }

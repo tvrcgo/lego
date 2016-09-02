@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const join = require('path').join
 const fs = require('fs')
@@ -14,7 +14,7 @@ class Agent extends Lego {
   }
 
   ready() {
-    this.readyNum++;
+    this.readyNum++
     if (this.readyNum < this.agents.length) {
       return
     }
@@ -30,7 +30,7 @@ const agent = new Agent
 
 if (agent.agents.length) {
   agent.agents.map(item => {
-    item.entry.call(this, agent, item.options)
+    item.entry.call(null, agent, item.options)
   })
 }
 else {

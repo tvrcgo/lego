@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const EventEmitter = require('events')
 const fs = require('fs')
@@ -8,7 +8,6 @@ class Lego extends EventEmitter {
 
   constructor(argv) {
     super(argv)
-    this.mnt = {}
     this.root = process.cwd()
     // message from child process
     process.on('message', (msg) => {
@@ -17,8 +16,6 @@ class Lego extends EventEmitter {
         this.emit(msg.cmd, msg)
       }
     })
-    // mount config
-    this.mntConfig()
   }
 
   mount(type) {
@@ -46,24 +43,22 @@ class Lego extends EventEmitter {
     }
     return fs.readdirSync(root)
       .map(item => item.replace(/\.js$/, ''))
-      .map(item => {
-        return {
-          name: item,
-          entry: require(join(root, item))
-        }
-      })
+      .map(item => ({
+        name: item,
+        entry: require(join(root, item))
+      }))
   }
 
-  mntConfig() {
+  get config() {
     const configPath = join(this.root, '/config/config.js')
     const mountPath = join(this.root, '/config/mount.js')
     if (!this.access(configPath) || !this.access(mountPath)) {
       throw new Error('[lego] Missing config/config or config/mount')
       return
     }
-    this.config = this.mnt.config = Object.assign({
-      env: process.env.ENV || configPath.env || 'develop'
-    },
+    return Object.assign({
+        env: process.env.ENV || configPath.env || 'develop'
+      },
       require(configPath),
       require(mountPath)
     )

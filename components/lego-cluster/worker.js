@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const join = require('path').join
 const fs = require('fs')
@@ -38,7 +38,7 @@ class Worker extends Lego {
       .map(serv => {
         const entry = serv.entry
         serv.options = this.config
-        serv.entry = (options, mnt, app) => {
+        serv.entry = (options, app) => {
           // mount services on ctx.service.*
           if (typeof app.context.service !== 'object') {
             app.context.service = {}
@@ -64,7 +64,7 @@ class Worker extends Lego {
         app.use(ware)
       }
       if (ware && ware.entry) {
-        const ret = ware.entry.call(null, ware.options, this.mnt, app)
+        const ret = ware.entry.call(this, ware.options, app)
         ;[].concat(ret).map(mw => {
           if (typeof mw === 'function') {
             app.use(mw)

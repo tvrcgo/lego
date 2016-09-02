@@ -1,5 +1,6 @@
 {
   "name": "lego-cluster",
   "description": "lego-cluster",
-  "main": "master.js"
+  "main": "master.js",
+  "version": "0.0.1"
 }
