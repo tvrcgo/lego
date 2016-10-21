@@ -16,17 +16,16 @@ class Master extends Lego {
 
   constructor(args) {
     super(args)
-    this.workerCount = 0
+    this.running = 0
   }
 
-  start(opts) {
-    opts = opts || {}
+  start(opts = {}) {
     this.options = opts
     if (cluster.isMaster) {
       debug.info('Start options: %s', JSON.stringify(opts))
       this.messenger = new Messenger(this)
       // start agent
-      this.forkAgent(opts)
+      this.forkAgent()
       this.on('agent-ready', this.onAgentReady.bind(this))
       this.on('worker-start', this.onWorkerStart.bind(this))
     }
@@ -36,7 +35,7 @@ class Master extends Lego {
     }
   }
 
-  forkAgent(opts) {
+  forkAgent() {
     this.agent = cp.fork(agentjs, [], {
       cwd: process.cwd()
     })
@@ -56,27 +55,25 @@ class Master extends Lego {
     })
   }
 
-  onAgentReady(msg) {
+  onAgentReady() {
     debug.succ('Agent ready.')
     // already start workers.
-    if (Object.keys(cluster.workers).length > 0) {
+    if (this.running > 0) {
       return
     }
     // start workers
     this.forkWorker()
     // reboot worker on crashed.
     cluster.on('exit', (worker, code) => {
+      this.running--
       debug.error('Worker %d exit (%d), reboot...', worker.id, code)
-      this.workerCount--
       this.forkWorker({ count: 1 })
     })
   }
 
-  forkWorker(opts) {
-    opts = opts || {}
-    const cpuCount = os.cpus().length
-    const workerCount = opts.count || cpuCount
-    for(let i=0; i<workerCount; i++) {
+  forkWorker(opts = {}) {
+    const limit = opts.count || os.cpus().length
+    for(let i=0; i<limit; i++) {
       const workerProc = cluster.fork()
       // message: worker -> master
       workerProc.on('message', msg => {
@@ -91,8 +88,9 @@ class Master extends Lego {
   }
 
   onWorkerStart(msg) {
-    this.workerCount++
-    if (this.workerCount === Object.keys(cluster.workers).length) {
+    this.running++
+    const limit = this.options.count || os.cpus().length
+    if (this.running === limit) {
       this.messenger.sendToAgent({
         to: 'agent',
         cmd: 'workers-ready',
