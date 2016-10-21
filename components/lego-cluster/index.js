@@ -11,7 +11,6 @@ const debug = require('./lib/debug')('master')
 
 const workerjs = join(__dirname, 'worker.js')
 const agentjs = join(__dirname, 'agent.js')
-const jobjs = join(__dirname, 'job.js')
 
 class Master extends Lego {
 
@@ -32,14 +31,8 @@ class Master extends Lego {
       this.on('worker-start', this.onWorkerStart.bind(this))
     }
     if (cluster.isWorker) {
-      if (opts.mode === 'job') {
-        // start job
-        require(jobjs)(opts)
-      }
-      else {
-        // start worker
-        require(workerjs)(opts)
-      }
+      // start worker
+      require(workerjs)(opts)
     }
   }
 
@@ -106,7 +99,7 @@ class Master extends Lego {
         options: this.options
       })
       this.emit('workers-ready')
-      debug.succ('%s ready.', msg.mode === 'job' ? 'Jobs' : 'Workers')
+      debug.succ('Workers ready.')
     }
   }
 

@@ -18,20 +18,9 @@ class Job extends Lego {
         const runner = job.entry.call(this, this, job.options)
         return new CronJob(job.options.cron||'* * * * * *', runner, null, true)
       } catch (e) {
-        console.error('[job] ERR:', err)
+        console.error('[lego] ERRJOB:', err)
         this.emit('error', err)
       }
-    })
-    // notify master
-    this.send({
-      to: 'master',
-      cmd: 'worker-start',
-      mode: 'job',
-      pid: process.pid
-    })
-    // restart job on command
-    this.on('worker-restart', msg=> {
-      process.exit(0)
     })
   }
 }
@@ -47,7 +36,7 @@ module.exports = (opts) => {
   })
   // exit
   process.once('SIGTERM', () => {
-    console.warn('[job] Job exit with signal SIGTERM')
+    console.warn('[lego] Job exit with signal SIGTERM')
     process.exit(0)
   })
 }
