@@ -4,6 +4,7 @@ const join = require('path').join
 const fs = require('fs')
 const koa = require('koa')
 const router = require('koa-router')()
+const debug = require('./lib/debug')('worker')
 const Lego = require('../lego')
 
 class Worker extends Lego {
@@ -74,6 +75,8 @@ class Worker extends Lego {
     })
     // start server
     app.listen(port)
+
+    debug.info(`Starting worker... (pid: ${process.pid})`)
     // notify master
     this.send({
       to: 'master',
