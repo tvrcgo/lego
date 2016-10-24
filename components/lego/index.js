@@ -37,7 +37,7 @@ class Lego extends EventEmitter {
 
   list(type) {
     const root = join(this.root, '/app/', type)
-    if (!this.access(root)) {
+    if (!access(root)) {
       console.warn(`[lego] No app/${type} directory.`)
       return []
     }
@@ -52,25 +52,16 @@ class Lego extends EventEmitter {
   get config() {
     const configPath = join(this.root, '/config/config.js')
     const mountPath = join(this.root, '/config/mount.js')
-    if (!this.access(configPath) || !this.access(mountPath)) {
-      throw new Error('[lego] Missing config/config or config/mount')
-      return
-    }
-    return Object.assign({
-        env: process.env.ENV || configPath.env || 'develop'
-      },
-      require(configPath),
-      require(mountPath)
-    )
-  }
 
-  access(path) {
-    try {
-      fs.accessSync(path, fs.F_OK)
-      return true
-    } catch (e) {
-      return false
-    }
+    const configInfo = access(configPath) ? require(configPath) : {}
+    const mountInfo = access(mountPath) ? require(mountPath) : {}
+
+    return Object.assign({
+        env: process.env.ENV || configInfo.env || 'develop'
+      },
+      configInfo,
+      mountInfo
+    )
   }
 
   // send to parent
@@ -78,6 +69,15 @@ class Lego extends EventEmitter {
     process.send && process.send(msg)
   }
 
+}
+
+function access(path) {
+  try {
+    fs.accessSync(path, fs.F_OK)
+    return true
+  } catch (e) {
+    return false
+  }
 }
 
 module.exports = Lego
