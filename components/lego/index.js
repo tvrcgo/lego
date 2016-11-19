@@ -3,6 +3,7 @@
 const EventEmitter = require('events')
 const fs = require('fs')
 const join = require('path').join
+const { access } = require('./lib/fn')
 
 class Lego extends EventEmitter {
 
@@ -69,15 +70,6 @@ class Lego extends EventEmitter {
     process.send && process.send(msg)
   }
 
-}
-
-function access(path) {
-  try {
-    fs.accessSync(path, fs.F_OK)
-    return true
-  } catch (e) {
-    return false
-  }
 }
 
 module.exports = Lego
