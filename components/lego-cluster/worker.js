@@ -3,9 +3,9 @@
 const join = require('path').join
 const fs = require('fs')
 const koa = require('koa')
-const router = require('koa-router')()
 const debug = require('./lib/debug')('worker')
 const Lego = require('../lego')
+const router = require('./router')
 
 class Worker extends Lego {
 
@@ -13,53 +13,14 @@ class Worker extends Lego {
     super(argv)
   }
 
-  mntRouters() {
-    const routers = this.map('router')
-    let routes
-    let entries = {}
-    routers.map(r => {
-      if (r.name === '_') {
-        routes = r.entry
-      } else {
-        entries[r.name] = r.entry
-      }
-    })
-    if (routes) {
-      // invoke router
-      routes.call(null, router, entries)
-      // use router middleware
-      return [router.routes(), router.allowedMethods({ throw: true })]
-    }
-    return []
-  }
-
-  mntServices() {
-    const services = this.map('service')
-    return services
-      .map(serv => {
-        const entry = serv.entry
-        serv.options = this.config
-        serv.entry = (options, app) => {
-          // mount services on ctx.service.*
-          if (typeof app.context.service !== 'object') {
-            app.context.service = {}
-          }
-          // mount ctx.service.[name]
-          app.context.service[serv.name] = entry.call(this, options)
-        }
-        return serv
-      })
-  }
-
   start(opts) {
     const port = opts.port || 1024
     const app = new koa()
     const mountwares = [].concat(
       this.mount('plugin'),
-      this.mntServices(),
-      this.mntRouters()
+      router.routes
     )
-    // use mount services, plugins, middlewares
+    // use mounted plugins
     mountwares.map(ware => {
       if (typeof ware === 'function') {
         app.use(ware)
