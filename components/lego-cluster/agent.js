@@ -30,7 +30,7 @@ const agent = new Agent
 
 if (agent.agents.length) {
   agent.agents.map(item => {
-    item.entry.call(null, agent, item.options)
+    item.entry.call(null, item.options, agent)
   })
 }
 else {

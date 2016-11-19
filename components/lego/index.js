@@ -35,7 +35,7 @@ class Lego extends EventEmitter {
       })
   }
 
-  list(type) {
+  map(type) {
     const root = join(this.root, '/app/', type)
     if (!access(root)) {
       console.warn(`[lego] No app/${type} directory.`)

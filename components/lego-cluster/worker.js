@@ -14,7 +14,7 @@ class Worker extends Lego {
   }
 
   mntRouters() {
-    const routers = this.list('router')
+    const routers = this.map('router')
     let routes
     let entries = {}
     routers.map(r => {
@@ -34,7 +34,7 @@ class Worker extends Lego {
   }
 
   mntServices() {
-    const services = this.list('service')
+    const services = this.map('service')
     return services
       .map(serv => {
         const entry = serv.entry
