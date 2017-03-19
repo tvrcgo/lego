@@ -1,9 +1,8 @@
-'use strict'
-
+'use strict';
 const EventEmitter = require('events')
 const fs = require('fs')
 const join = require('path').join
-const { access } = require('./lib/fn')
+const { access, isArray } = require('./lib/fn')
 
 class Lego extends EventEmitter {
 
@@ -20,9 +19,11 @@ class Lego extends EventEmitter {
   }
 
   mount(type) {
+    const ENV = process.env.NODE_ENV
     const wares = this.config[type] || {}
     return Object.keys(wares)
       .map(key => Object.assign({ key: key }, wares[key]))
+      .filter(ware => (isArray(ware.env) && ware.env.includes(ENV)) || ware.env === undefined)
       .filter(ware => (ware.enable || ware.enable === undefined))
       .map(ware => {
         const entryName = ware.path || ware.package || ware.key

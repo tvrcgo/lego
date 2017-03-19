@@ -9,3 +9,7 @@ exports.access = (path) => {
     return false
   }
 }
+
+exports.isArray = obj => {
+  return obj && toString.call(obj) === '[object Array]'
+}
