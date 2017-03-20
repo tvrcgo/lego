@@ -19,7 +19,7 @@ class Lego extends EventEmitter {
   }
 
   mount(type) {
-    const ENV = process.env.NODE_ENV
+    const ENV = this.config.env
     const wares = this.config[type] || {}
     return Object.keys(wares)
       .map(key => Object.assign({ key: key }, wares[key]))
@@ -59,7 +59,7 @@ class Lego extends EventEmitter {
     const mountInfo = access(mountPath) ? require(mountPath) : {}
 
     return Object.assign({
-        env: process.env.ENV || configInfo.env || 'develop'
+        env: process.env.NODE_ENV || configInfo.env || 'dev'
       },
       configInfo,
       mountInfo

@@ -1,5 +1,4 @@
 'use strict'
-
 const join = require('path').join
 const fs = require('fs')
 const koa = require('koa')

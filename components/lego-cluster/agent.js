@@ -1,8 +1,6 @@
 'use strict'
-
 const join = require('path').join
 const fs = require('fs')
-
 const Lego = require('../lego')
 
 class Agent extends Lego {
@@ -16,26 +14,31 @@ class Agent extends Lego {
   ready() {
     this.readyNum++
     if (this.readyNum < this.agents.length) {
+      // agent ready
+      this.send({
+        to: 'master',
+        cmd: 'agent-ready'
+      })
       return
     }
     // all agents are ready
     this.send({
       to: 'master',
-      cmd: 'agent-ready'
+      cmd: 'agents-ready'
     })
   }
 }
 
-const agent = new Agent
+const app = new Agent()
 
-if (agent.agents.length) {
-  agent.agents.map(item => {
-    item.entry.call(null, item.options, agent)
+if (app.agents.length) {
+  app.agents.map(agent => {
+    agent.entry.call(null, agent.options, app)
   })
 }
 else {
   // no agent
-  agent.ready()
+  app.ready()
 }
 
 // exit

@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const cluster = require('cluster')
 const cp = require('child_process')
@@ -9,8 +9,8 @@ const Lego = require('../lego')
 const Messenger = require('./lib/messenger')
 const debug = require('./lib/debug')('master')
 
-const workerjs = join(__dirname, 'worker.js')
-const agentjs = join(__dirname, 'agent.js')
+const workerApp = join(__dirname, 'worker.js')
+const agentApp = join(__dirname, 'agent.js')
 
 class Master extends Lego {
 
@@ -26,17 +26,17 @@ class Master extends Lego {
       this.messenger = new Messenger(this)
       // start agent
       this.forkAgent()
-      this.on('agent-ready', this.onAgentReady.bind(this))
+      this.on('agents-ready', this.onAgentReady.bind(this))
       this.on('worker-start', this.onWorkerStart.bind(this))
     }
     if (cluster.isWorker) {
       // start worker
-      require(workerjs)(opts)
+      require(workerApp)(opts)
     }
   }
 
   forkAgent() {
-    this.agent = cp.fork(agentjs, [], {
+    this.agent = cp.fork(agentApp, [], {
       cwd: process.cwd()
     })
     // message: agent -> master
